@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Producer AI</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#9b59b6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Producer AI">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0d12; --surface:#16161f; --surface2:#1e1e2a;
+    --border:#2a2a3a; --border2:#353550;
+    --accent:#9b59b6; --accent2:#7d3c98;
+    --text:#eef0f5; --dim:#9098b0; --muted:#50576a;
+    --ubg:#1a1225; --uborder:#3d2060;
+    --aibg:#131625; --aiborder:#232850;
+    --green:#2ecc71; --red:#e74c3c; --blue:#3498db; --orange:#e67e22;
+    --radius:10px; --radius-sm:7px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;height:100dvh;display:flex;flex-direction:column;overflow:hidden;font-size:15px;}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:14px;height:64px;flex-shrink:0;}
+  .logo{width:40px;height:40px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;border-radius:8px;flex-shrink:0;}
+  .htitle{flex:1;}
+  .htitle h1{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--accent);line-height:1;}
+  .htitle p{font-size:11px;color:var(--dim);margin-top:1px;}
+  .proj-wrap{display:flex;align-items:center;gap:8px;}
+  select{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:8px 12px;font-size:13px;border-radius:var(--radius-sm);cursor:pointer;max-width:160px;outline:none;font-family:'Inter',sans-serif;font-weight:500;}
+  select:focus{border-color:var(--accent);}
+  .btn-add{background:var(--accent);color:#fff;border:none;padding:9px 16px;font-size:13px;font-weight:700;border-radius:var(--radius-sm);cursor:pointer;white-space:nowrap;}
+  .btn-add:hover{background:var(--accent2);}
+  .btn-manage{background:var(--surface2);color:var(--dim);border:1px solid var(--border2);padding:9px 12px;font-size:15px;border-radius:var(--radius-sm);cursor:pointer;}
+  .btn-manage:hover{border-color:var(--accent);color:var(--accent);}
+  .qa{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0;}
+  .qa button{background:var(--surface2);border:1px solid var(--border2);color:var(--dim);padding:7px 14px;font-size:13px;font-weight:500;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+  .qa button:hover{border-color:var(--accent);color:var(--accent);background:rgba(155,89,182,0.08);}
+  .qa .receipt-btn{border-color:rgba(52,152,219,0.4);color:var(--blue);}
+  .qa .receipt-btn:hover{border-color:var(--blue);background:rgba(52,152,219,0.08);}
+  .qa .schedule-btn{border-color:rgba(46,204,113,0.4);color:var(--green);}
+  .qa .schedule-btn:hover{border-color:var(--green);background:rgba(46,204,113,0.08);}
+  main{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
+  main::-webkit-scrollbar{width:5px;}
+  main::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+  .welcome{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:var(--radius);padding:22px;}
+  .welcome h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--accent);margin-bottom:8px;}
+  .welcome p{font-size:14px;color:var(--dim);line-height:1.7;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
+  .chip{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:var(--dim);cursor:pointer;line-height:1.5;transition:all .15s;}
+  .chip:hover{border-color:var(--accent);color:var(--text);background:rgba(155,89,182,0.06);}
+  .chip span{display:block;font-size:18px;margin-bottom:4px;}
+  .msg{display:flex;gap:12px;animation:fadeUp .25s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+  .msg.user{flex-direction:row-reverse;}
+  .ava{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px;}
+  .ava.ai{background:var(--accent);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:19px;}
+  .ava.user{background:var(--uborder);color:#c39bd3;font-size:17px;}
+  .bubble{padding:13px 17px;border-radius:var(--radius);font-size:14px;line-height:1.7;max-width:88%;}
+  .bubble.ai{background:var(--aibg);border:1px solid var(--aiborder);border-radius:3px 10px 10px 10px;}
+  .bubble.user{background:var(--ubg);border:1px solid var(--uborder);border-radius:10px 3px 10px 10px;}
+  .bubble strong{color:var(--accent);font-weight:700;}
+  .bubble table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px;}
+  .bubble th{background:rgba(155,89,182,0.1);border:1px solid var(--border2);padding:7px 11px;text-align:left;color:var(--accent);font-weight:600;}
+  .bubble td{border:1px solid var(--border);padding:7px 11px;}
+  .bubble tr:nth-child(even) td{background:rgba(255,255,255,0.02);}
+  .bubble ul{padding-left:18px;margin:8px 0;}
+  .bubble li{margin:4px 0;}
+  .dots{display:flex;gap:5px;padding:5px 0;}
+  .dots span{width:8px;height:8px;background:var(--accent);border-radius:50%;animation:bounce 1.2s infinite;opacity:.8;}
+  .dots span:nth-child(2){animation-delay:.2s;}
+  .dots span:nth-child(3){animation-delay:.4s;}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+  footer{background:var(--surface);border-top:1px solid var(--border);padding:14px 20px;flex-shrink:0;}
+  .irow{display:flex;gap:10px;align-items:flex-end;}
+  textarea{flex:1;background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:11px 15px;font-family:'Inter',sans-serif;font-size:14px;border-radius:var(--radius);resize:none;min-height:46px;max-height:130px;outline:none;line-height:1.6;}
+  textarea:focus{border-color:var(--accent);}
+  textarea::placeholder{color:var(--muted);}
+  .send{background:var(--accent);color:#fff;border:none;width:46px;height:46px;border-radius:var(--radius);cursor:pointer;font-size:18px;flex-shrink:0;font-weight:700;}
+  .send:hover{background:var(--accent2);}
+  .send:disabled{opacity:.4;cursor:not-allowed;}
+  .fnote{text-align:center;font-size:11px;color:var(--muted);margin-top:8px;}
+  .sdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;vertical-align:middle;margin-right:5px;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(5px);}
+  .modal{background:var(--surface);border:1px solid var(--border2);border-top:3px solid var(--accent);border-radius:var(--radius);padding:28px;width:92%;max-width:520px;max-height:85vh;overflow-y:auto;}
+  .modal h3{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--accent);margin-bottom:20px;}
+  .fg{margin-bottom:14px;}
+  .fg label{display:block;font-size:12px;color:var(--dim);margin-bottom:5px;text-transform:uppercase;font-weight:600;letter-spacing:.5px;}
+  .fg input,.fg select{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:10px 13px;font-family:'Inter',sans-serif;font-size:14px;border-radius:var(--radius-sm);outline:none;}
+  .fg input:focus,.fg select:focus{border-color:var(--accent);}
+  .mbtns{display:flex;gap:10px;margin-top:20px;}
+  .mbtn1{flex:1;background:var(--accent);color:#fff;border:none;padding:12px;font-weight:700;font-size:14px;border-radius:var(--radius-sm);cursor:pointer;}
+  .mbtn1:hover{background:var(--accent2);}
+  .mbtn2{background:transparent;color:var(--dim);border:1px solid var(--border2);padding:12px 18px;font-size:14px;border-radius:var(--radius-sm);cursor:pointer;font-family:'Inter',sans-serif;}
+  .mbtn2:hover{color:var(--text);border-color:var(--dim);}
+  .mbtn-blue{flex:1;background:var(--blue);color:#fff;border:none;padding:12px;font-weight:700;font-size:14px;border-radius:var(--radius-sm);cursor:pointer;}
+  .mbtn-green{flex:1;background:var(--green);color:#000;border:none;padding:12px;font-weight:700;font-size:14px;border-radius:var(--radius-sm);cursor:pointer;}
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1225;border:1px solid var(--accent);color:#c39bd3;padding:10px 22px;border-radius:25px;font-size:13px;font-weight:600;z-index:200;display:none;}
+  .tabs{display:flex;gap:5px;margin-bottom:18px;flex-wrap:wrap;}
+  .tab{background:var(--surface2);border:1px solid var(--border2);color:var(--dim);padding:8px 14px;font-size:12px;font-weight:600;border-radius:var(--radius-sm);cursor:pointer;font-family:'Inter',sans-serif;}
+  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .manage-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;}
+  .manage-item-name{font-weight:600;font-size:14px;}
+  .manage-item-sub{font-size:12px;color:var(--dim);margin-top:3px;}
+  .btn-del{background:rgba(231,76,60,0.12);color:var(--red);border:1px solid rgba(231,76,60,0.25);padding:6px 12px;font-size:12px;font-weight:600;border-radius:var(--radius-sm);cursor:pointer;margin-left:8px;white-space:nowrap;}
+  .btn-del:hover{background:rgba(231,76,60,0.25);}
+  .empty-msg{font-size:13px;color:var(--muted);padding:12px 0;text-align:center;}
+  .payment-row{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;}
+  .payment-row.paid{opacity:0.6;border-color:var(--green);}
+  .payment-row.overdue{border-color:var(--red);}
+  .payment-row.upcoming{border-color:var(--orange);}
+  .payment-info{flex:1;}
+  .payment-desc{font-weight:600;font-size:14px;}
+  .payment-meta{font-size:12px;color:var(--dim);margin-top:3px;}
+  .payment-amount{font-weight:700;font-size:15px;color:var(--accent);margin-right:10px;white-space:nowrap;}
+  .btn-paid{background:rgba(46,204,113,0.12);color:var(--green);border:1px solid rgba(46,204,113,0.3);padding:6px 12px;font-size:12px;font-weight:600;border-radius:var(--radius-sm);cursor:pointer;white-space:nowrap;}
+  .btn-paid:hover{background:rgba(46,204,113,0.25);}
+  .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;margin-left:8px;}
+  .badge-paid{background:rgba(46,204,113,0.15);color:var(--green);}
+  .badge-overdue{background:rgba(231,76,60,0.15);color:var(--red);}
+  .badge-upcoming{background:rgba(230,126,34,0.15);color:var(--orange);}
+  .schedule-row{display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;}
+  .schedule-row input{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:7px 10px;font-size:13px;border-radius:var(--radius-sm);outline:none;font-family:'Inter',sans-serif;}
+  .schedule-summary{background:rgba(155,89,182,0.08);border:1px solid rgba(155,89,182,0.2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px;font-size:13px;}
+  @media(max-width:600px){
+    header{padding:0 12px;height:58px;}
+    .qa{padding:8px 12px;gap:6px;}
+    .qa button{padding:6px 10px;font-size:12px;}
+    main{padding:12px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+    footer{padding:10px 12px;}
+    .proj-wrap select{max-width:100px;font-size:12px;padding:6px 8px;}
+    .htitle h1{font-size:15px;}
+    .htitle p{display:none;}
+    .btn-add{padding:7px 10px;font-size:12px;}
+    .btn-manage{padding:7px 9px;font-size:13px;}
+    .payment-row{flex-wrap:wrap;}
+    .bubble table{font-size:11px;display:block;overflow-x:auto;}
+    .bubble td,.bubble th{padding:4px 6px;white-space:nowrap;}
+    textarea{font-size:16px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen" style="position:fixed;inset:0;background:#0d0d12;display:flex;align-items:center;justify-content:center;z-index:999;">
+  <div style="background:#16161f;border:1px solid #2a2a3a;border-top:3px solid #9b59b6;border-radius:10px;padding:36px;width:90%;max-width:360px;text-align:center;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:#9b59b6;letter-spacing:3px;margin-bottom:8px;">PRODUCER AI</div>
+    <div style="font-size:13px;color:#9098b0;margin-bottom:28px;">Ψηφιακός Βοηθός Μουσικής Παραγωγής</div>
+    <input id="passwordInput" type="password" placeholder="Κωδικός πρόσβασης"
+      style="width:100%;background:#1e1e2a;border:1px solid #353550;color:#eef0f5;padding:12px 15px;font-size:15px;border-radius:7px;outline:none;margin-bottom:12px;font-family:'Inter',sans-serif;"
+      onkeydown="if(event.key==='Enter')checkPassword()"/>
+    <div id="loginError" style="color:#e74c3c;font-size:13px;margin-bottom:10px;display:none;">❌ Λάθος κωδικός!</div>
+    <button onclick="checkPassword()"
+      style="width:100%;background:#9b59b6;color:#fff;border:none;padding:13px;font-size:15px;font-weight:700;border-radius:7px;cursor:pointer;">
+      ΕΙΣΟΔΟΣ
+    </button>
+  </div>
+</div>
+
+<header>
+  <div class="logo">P</div>
+  <div class="htitle">
+    <h1>PRODUCER AI</h1>
+    <p>Ψηφιακός Βοηθός Μουσικής Παραγωγής</p>
+  </div>
+  <div class="proj-wrap">
+    <select id="projSel" onchange="switchProj()">
+      <option value="">— Επιλογή project —</option>
+    </select>
+    <button class="btn-manage" onclick="openManage()" title="Διαχείριση">⚙️</button>
+    <button class="btn-add" onclick="openModal()">+ Project</button>
+  </div>
+</header>
+
+<div class="qa">
+  <button onclick="qa('εξοδο')">💰 Έξοδο</button>
+  <button onclick="qa('εργασια')">🎵 Εργασία</button>
+  <button onclick="qa('report')">📊 Report</button>
+  <button onclick="qa('email')">✉️ Email</button>
+  <button onclick="qa('deadline')">📅 Deadline</button>
+  <button onclick="qa('κοστος')">📋 Κόστος</button>
+  <button class="receipt-btn" onclick="openReceiptModal()">💳 Είσπραξη</button>
+  <button class="schedule-btn" onclick="openScheduleModal()">🗓️ Δόσεις</button>
+</div>
+
+<main id="chat">
+  <div class="welcome">
+    <h2>ΚΑΛΩΣ ΗΡΘΕΣ, PRODUCER</h2>
+    <p>Είμαι ο ψηφιακός σου βοηθός για μουσική παραγωγή. Διαχειρίζομαι projects, έξοδα, πληρωμές και deadlines.</p>
+    <div class="grid">
+      <div class="chip" onclick="ex('Κατέγραψε έξοδο 500€ για studio time')"><span>🎙️</span>Studio Time</div>
+      <div class="chip" onclick="ex('Ποιες εργασίες εκκρεμούν;')"><span>📋</span>Εκκρεμείς εργασίες</div>
+      <div class="chip" onclick="ex('Φτιάξε email για τον καλλιτέχνη για το mixing')"><span>✉️</span>Email σε καλλιτέχνη</div>
+      <div class="chip" onclick="ex('Δώσε μου report με όλα τα έξοδα μέχρι σήμερα')"><span>📊</span>Report εξόδων</div>
+      <div class="chip" onclick="ex('Υπολόγισε κόστος για mastering 10 tracks')"><span>🧮</span>Υπολογισμός κόστους</div>
+      <div class="chip" onclick="ex('Πρόσθεσε εργασία: mixing track 3, deadline Παρασκευή')"><span>🎚️</span>Νέα εργασία</div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="irow">
+    <textarea id="inp" rows="1" placeholder="Γράψε ό,τι χρειάζεσαι..." onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+    <button class="send" id="sendBtn" onclick="send()">➤</button>
+  </div>
+  <div class="fnote"><span class="sdot"></span>Claude AI · Supabase · Αποθηκεύεται αυτόματα</div>
+</footer>
+
+<div class="toast" id="toast">✅ Αποθηκεύτηκε!</div>
+
+<!-- NEW PROJECT -->
+<div class="overlay" id="modal" style="display:none">
+  <div class="modal">
+    <h3>ΝΕΟ PROJECT</h3>
+    <div class="fg"><label>Τίτλος Project</label><input id="fName" placeholder="π.χ. Album Νίκου Βέρτη"/></div>
+    <div class="fg"><label>Καλλιτέχνης</label><input id="fClient" placeholder="π.χ. Νίκος Βέρτης"/></div>
+    <div class="fg"><label>Συμφωνηθέν Ποσό (€)</label><input id="fBudget" type="number" placeholder="π.χ. 5000"/></div>
+    <div class="fg"><label>Ημερομηνία Έναρξης</label><input id="fStartDate" type="date"/></div>
+    <div class="fg">
+      <label>Φάση</label>
+      <select id="fPhase">
+        <option>Pre-Production</option>
+        <option>Recording</option>
+        <option>Mixing</option>
+        <option>Mastering</option>
+        <option>Παράδοση</option>
+        <option>Ολοκληρώθηκε</option>
+      </select>
+    </div>
+    <div class="mbtns">
+      <button class="mbtn2" onclick="closeModal()">Ακύρωση</button>
+      <button class="mbtn1" onclick="createProj()">Δημιουργία</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECEIPT MODAL -->
+<div class="overlay" id="receiptModal" style="display:none">
+  <div class="modal" style="border-top-color:var(--blue)">
+    <h3 style="color:var(--blue)">💳 ΝΕΑ ΕΙΣΠΡΑΞΗ</h3>
+    <div class="fg"><label>Ποσό (€)</label><input id="rAmount" type="number" placeholder="π.χ. 2000"/></div>
+    <div class="fg"><label>Σημείωση</label><input id="rNote" placeholder="π.χ. Προκαταβολή, 1η δόση..."/></div>
+    <div class="mbtns">
+      <button class="mbtn2" onclick="closeReceiptModal()">Ακύρωση</button>
+      <button class="mbtn-blue" onclick="saveReceipt()">💳 Καταχώρηση</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCHEDULE MODAL -->
+<div class="overlay" id="scheduleModal" style="display:none">
+  <div class="modal" style="border-top-color:var(--green);max-width:600px">
+    <h3 style="color:var(--green)">🗓️ ΠΡΟΓΡΑΜΜΑ ΔΟΣΕΩΝ</h3>
+    <div id="scheduleContent"></div>
+    <div class="mbtns" id="scheduleBtns"></div>
+  </div>
+</div>
+
+<!-- MANAGE -->
+<div class="overlay" id="manageModal" style="display:none">
+  <div class="modal">
+    <h3>ΔΙΑΧΕΙΡΙΣΗ</h3>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('projects',this)">🎵 Projects</button>
+      <button class="tab" onclick="switchTab('expenses',this)">💰 Έξοδα</button>
+      <button class="tab" onclick="switchTab('receipts',this)">💳 Εισπράξεις</button>
+      <button class="tab" onclick="switchTab('tasks',this)">🎚️ Εργασίες</button>
+    </div>
+    <div id="manageContent"></div>
+    <div class="mbtns"><button class="mbtn1" onclick="closeManage()">Κλείσιμο</button></div>
+  </div>
+</div>
+
+<script>
+let projects = {}, currentProject = null, history = [], loading = false, currentTab = 'projects';
+let paymentSchedules = {};
+
+async function dbCall(type, data) {
+  const res = await fetch('/api/sheets', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({type,data}) });
+  return res.json();
+}
+async function chatCall(system, messages) {
+  const res = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({system,messages}) });
+  return res.json();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg||'✅ Αποθηκεύτηκε!';
+  t.style.display='block';
+  setTimeout(()=>t.style.display='none', 2500);
+}
+
+function buildSystem() {
+  const today = new Date().toLocaleDateString('el-GR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const cp = currentProject && projects[currentProject];
+  let ctx = '';
+  if (cp) {
+    const totalExp = cp.expenses.reduce((a,e)=>a+Number(e.amount),0);
+    const totalRec = (cp.receipts||[]).reduce((a,r)=>a+Number(r.amount),0);
+    const bud = Number(cp.budget)||0;
+    const schedule = paymentSchedules[currentProject] || [];
+    const scheduleInfo = schedule.length ? '\n\n### Πρόγραμμα Δόσεων:\n' + schedule.map(p=>`• ${p.description} | €${Number(p.amount).toLocaleString('el-GR')} | ${p.due_date} | ${p.paid?'✅ Πληρώθηκε':'⏳ Εκκρεμεί'}`).join('\n') : '';
+    ctx = `\n## ΕΝΕΡΓΟ PROJECT\n- Τίτλος: ${cp.name}\n- Καλλιτέχνης: ${cp.client}\n- Συμφωνηθέν ποσό: ${bud?'€'+bud.toLocaleString('el-GR'):'Μη ορισμένο'}\n- Φάση: ${cp.phase||'Pre-Production'}\n- Έξοδα: €${totalExp.toLocaleString('el-GR')}\n- Εισπράξεις: €${totalRec.toLocaleString('el-GR')}\n- Υπόλοιπο καλλιτέχνη: ${bud?'€'+(bud-totalRec).toLocaleString('el-GR'):'N/A'}\n- Κέρδος: €${(totalRec-totalExp).toLocaleString('el-GR')}\n\n### Έξοδα:\n${cp.expenses.length?cp.expenses.map(e=>`• ${e.date} | ${e.category} | ${e.recipient} | €${Number(e.amount).toLocaleString('el-GR')}`).join('\n'):'(κανένα)'}\n\n### Εισπράξεις:\n${(cp.receipts||[]).length?(cp.receipts||[]).map(r=>`• ${r.date} | €${Number(r.amount).toLocaleString('el-GR')}${r.note?' | '+r.note:''}`).join('\n'):'(καμία)'}${scheduleInfo}\n\n### Εργασίες:\n${cp.tasks.length?cp.tasks.map(t=>`• [${t.done?'✓':'○'}] ${t.name} | ${t.assignee||'-'} | ${t.deadline||'-'}`).join('\n'):'(καμία)'}`;
+  } else ctx = '\nΔεν έχει επιλεγεί project.';
+  return `Είσαι ο "Producer AI", βοηθός για επαγγελματία μουσικό παραγωγό. Μιλάς ΠΑΝΤΑ ελληνικά, φιλικά και πρακτικά.\nΣήμερα: ${today}${ctx}\n\nΤΙ ΚΑΝΕΙΣ: Καταχώρηση εξόδων (studio, musicians, mixing, mastering, εξοπλισμός), εισπράξεων, εργασιών, reports, emails σε καλλιτέχνες, υπολογισμοί κόστους.\n\nΚΑΤΗΓΟΡΙΕΣ ΕΞΟΔΩΝ: Studio Time, Session Musicians, Mixing, Mastering, Εξοπλισμός, Samples/Plugins, Μεταφορικά, Διάφορα\n\nΟΤΑΝ ο χρήστης αναφέρει έξοδο:\nSAVE_EXPENSE:{"category":"[κατ]","recipient":"[παρ]","amount":[ποσό],"note":"[σημ]"}\n\nΟΤΑΝ αναφέρει είσπραξη:\nSAVE_RECEIPT:{"amount":[ποσό],"note":"[σημ]"}\n\nΟΤΑΝ αναφέρει εργασία:\nSAVE_TASK:{"name":"[όνομα]","assignee":"[υπεύθ]","deadline":"[προθ]"}\n\nΟΤΑΝ θέλει νέο project:\nSAVE_PROJECT:{"name":"[τίτλος]","client":"[καλλιτέχνης]","budget":[ποσό],"start_date":""}\n\nΑπάντα σύντομα. Χρησιμοποίησε πίνακες για αριθμητικά.`;
+}
+
+async function init() {
+  addAI('⏳ Φορτώνω τα projects σου...');
+  try {
+    const data = await dbCall('load_projects');
+    projects = data.projects || {};
+    refreshSelect();
+    document.getElementById('chat').innerHTML = '';
+    if (Object.keys(projects).length > 0) {
+      const firstId = Object.keys(projects)[0];
+      currentProject = firstId;
+      document.getElementById('projSel').value = firstId;
+      const p = projects[firstId];
+      const totExp = p.expenses.reduce((a,e)=>a+Number(e.amount),0);
+      const totRec = (p.receipts||[]).reduce((a,r)=>a+Number(r.amount),0);
+      const bud = Number(p.budget)||0;
+      addAI(`🎵 Καλώς ήρθες!\n\nΕνεργό: **"${p.name}"** | ${p.client}\n💰 Έξοδα: €${totExp.toLocaleString('el-GR')} | 💳 Εισπράξεις: €${totRec.toLocaleString('el-GR')}${bud?'\n📊 Υπόλοιπο: €'+(bud-totRec).toLocaleString('el-GR'):''}\n\nΠώς μπορώ να βοηθήσω;`);
+      loadPaymentSchedule(firstId);
+    } else {
+      addAI('🎵 Καλώς ήρθες! Πάτα **"+ Project"** για να ξεκινήσεις!');
+    }
+  } catch(e) {
+    document.getElementById('chat').innerHTML='';
+    addAI('⚠️ Σφάλμα σύνδεσης. Δοκίμασε να ανανεώσεις.');
+  }
+}
+
+async function loadPaymentSchedule(projectId) {
+  try {
+    const data = await dbCall('load_payment_schedule', { projectId });
+    paymentSchedules[projectId] = data.payments || [];
+  } catch(e) {}
+}
+
+function refreshSelect() {
+  const sel = document.getElementById('projSel');
+  sel.innerHTML = '<option value="">— Επιλογή project —</option>';
+  Object.entries(projects).forEach(([id,p]) => sel.innerHTML += `<option value="${id}">${p.name}</option>`);
+  if (currentProject) sel.value = currentProject;
+}
+
+function openModal() { document.getElementById('modal').style.display='flex'; setTimeout(()=>document.getElementById('fName').focus(),100); }
+function closeModal() { document.getElementById('modal').style.display='none'; }
+function openReceiptModal() {
+  if (!currentProject) { alert('Επέλεξε πρώτα ένα project!'); return; }
+  document.getElementById('receiptModal').style.display='flex';
+  setTimeout(()=>document.getElementById('rAmount').focus(),100);
+}
+function closeReceiptModal() { document.getElementById('receiptModal').style.display='none'; }
+
+function openScheduleModal() {
+  if (!currentProject) { alert('Επέλεξε πρώτα ένα project!'); return; }
+  const schedule = paymentSchedules[currentProject] || [];
+  if (schedule.length > 0) showExistingSchedule(schedule);
+  else showNewScheduleForm();
+  document.getElementById('scheduleModal').style.display='flex';
+}
+function closeScheduleModal() { document.getElementById('scheduleModal').style.display='none'; }
+
+function showNewScheduleForm() {
+  const p = projects[currentProject];
+  const bud = Number(p.budget)||0;
+  const today = new Date().toISOString().split('T')[0];
+  const defaultPlan = [
+    {pct:30, desc:'Προκαταβολή', days:0},
+    {pct:40, desc:'2η Δόση (Παράδοση mix)', days:30},
+    {pct:30, desc:'Τελική (Mastering)', days:60},
+  ];
+  document.getElementById('scheduleContent').innerHTML = `
+    <div class="schedule-summary">🎵 <strong>${p.name}</strong> | Ποσό: <strong>€${bud.toLocaleString('el-GR')}</strong></div>
+    <div class="fg"><label>Ημερομηνία Έναρξης</label><input type="date" id="schedStartDate" value="${p.start_date||today}" onchange="updateScheduleAmounts()"/></div>
+    <div style="margin-bottom:12px;font-size:12px;color:var(--dim);text-transform:uppercase;font-weight:600;">Δόσεις</div>
+    ${defaultPlan.map((d,i) => `
+      <div class="schedule-row">
+        <input style="width:70px" type="number" id="spct${i}" value="${d.pct}" onchange="updateScheduleAmounts()" placeholder="%"/>
+        <span style="color:var(--dim);font-size:13px">%</span>
+        <input style="flex:1" type="text" id="sdesc${i}" value="${d.desc}" placeholder="Περιγραφή"/>
+        <input style="width:70px" type="number" id="sdays${i}" value="${d.days}" placeholder="Μέρες"/>
+        <input style="width:110px;color:var(--accent);font-weight:600;background:transparent;border-color:transparent;" type="text" id="samt${i}" value="€${Math.round(bud*d.pct/100).toLocaleString('el-GR')}" readonly/>
+      </div>`).join('')}
+    <div id="schedTotal" style="text-align:right;font-size:13px;color:var(--dim);margin-top:8px;"></div>`;
+  document.getElementById('scheduleBtns').innerHTML = `
+    <button class="mbtn2" onclick="closeScheduleModal()">Ακύρωση</button>
+    <button class="mbtn-green" onclick="saveSchedule(${defaultPlan.length})">💾 Αποθήκευση</button>`;
+  updateScheduleAmounts();
+}
+
+function updateScheduleAmounts() {
+  const p = projects[currentProject];
+  const bud = Number(p.budget)||0;
+  let total = 0;
+  for(let i=0;i<10;i++) {
+    const el = document.getElementById('spct'+i);
+    if (!el) break;
+    const pct = Number(el.value)||0;
+    const amt = Math.round(bud*pct/100);
+    total += amt;
+    const se = document.getElementById('samt'+i);
+    if(se) se.value = '€'+amt.toLocaleString('el-GR');
+  }
+  const totalEl = document.getElementById('schedTotal');
+  if(totalEl) totalEl.innerHTML = `Σύνολο: <strong style="color:${Math.abs(total-bud)<1?'var(--green)':'var(--red)'}">€${total.toLocaleString('el-GR')}</strong>`;
+}
+
+async function saveSchedule(count) {
+  const p = projects[currentProject];
+  const bud = Number(p.budget)||0;
+  const startDate = document.getElementById('schedStartDate').value;
+  if (!startDate) { alert('Βάλε ημερομηνία έναρξης!'); return; }
+  const payments = [];
+  for(let i=0;i<(count||10);i++) {
+    const pctEl = document.getElementById('spct'+i);
+    if (!pctEl) break;
+    const pct = Number(pctEl.value)||0;
+    const desc = document.getElementById('sdesc'+i)?.value||'';
+    const days = Number(document.getElementById('sdays'+i)?.value)||0;
+    if(pct > 0) {
+      const dueDate = new Date(startDate);
+      dueDate.setDate(dueDate.getDate() + days);
+      payments.push({ id:'pay'+Date.now()+i, projectId:currentProject, description:desc, percentage:pct, amount:Math.round(bud*pct/100), dueDate:dueDate.toLocaleDateString('el-GR'), paid:false });
+    }
+  }
+  await dbCall('save_payment_schedule', { payments });
+  await dbCall('update_project', { id: currentProject, start_date: startDate });
+  projects[currentProject].start_date = startDate;
+  paymentSchedules[currentProject] = payments.map(p=>({...p, due_date:p.dueDate, project_id:p.projectId}));
+  showToast('✅ Πρόγραμμα αποθηκεύτηκε!');
+  showExistingSchedule(paymentSchedules[currentProject]);
+}
+
+function showExistingSchedule(schedule) {
+  const p = projects[currentProject];
+  const bud = Number(p.budget)||0;
+  const today = new Date();
+  const totalPaid = schedule.filter(s=>s.paid).reduce((a,s)=>a+Number(s.amount),0);
+  const totalPending = schedule.filter(s=>!s.paid).reduce((a,s)=>a+Number(s.amount),0);
+  document.getElementById('scheduleContent').innerHTML = `
+    <div class="schedule-summary">🎵 <strong>${p.name}</strong> | €${bud.toLocaleString('el-GR')}<br>
+    ✅ Εισπραχθέντα: <strong style="color:var(--green)">€${totalPaid.toLocaleString('el-GR')}</strong> | ⏳ Εκκρεμή: <strong style="color:var(--orange)">€${totalPending.toLocaleString('el-GR')}</strong></div>
+    ${schedule.map(s => {
+      const dueDate = parseGreekDate(s.due_date);
+      const isOverdue = !s.paid && dueDate && dueDate < today;
+      const isUpcoming = !s.paid && dueDate && dueDate >= today && (dueDate-today) < 7*24*60*60*1000;
+      let cls = s.paid?'paid':isOverdue?'overdue':isUpcoming?'upcoming':'';
+      let badge = s.paid?'<span class="badge badge-paid">✅ Πληρώθηκε</span>':isOverdue?'<span class="badge badge-overdue">⚠️ Εκπρόθεσμη</span>':isUpcoming?'<span class="badge badge-upcoming">🔔 Σύντομα</span>':'';
+      return `<div class="payment-row ${cls}">
+        <div class="payment-info"><div class="payment-desc">${s.description}${badge}</div><div class="payment-meta">${s.percentage}% · ${s.due_date}${s.paid&&s.paid_date?' · Πληρώθηκε: '+s.paid_date:''}</div></div>
+        <div class="payment-amount">€${Number(s.amount).toLocaleString('el-GR')}</div>
+        ${!s.paid?`<button class="btn-paid" onclick="markPaid('${s.id}')">💳 Εισπράχθηκε</button>`:''}
+      </div>`;
+    }).join('')}`;
+  document.getElementById('scheduleBtns').innerHTML = `
+    <button class="mbtn2" onclick="closeScheduleModal()">Κλείσιμο</button>
+    <button class="mbtn2" onclick="showNewScheduleForm()">✏️ Επεξεργασία</button>`;
+}
+
+function parseGreekDate(dateStr) {
+  if (!dateStr) return null;
+  const parts = dateStr.split('/');
+  if (parts.length === 3) return new Date(parts[2], parts[1]-1, parts[0]);
+  return null;
+}
+
+async function markPaid(paymentId) {
+  const schedule = paymentSchedules[currentProject] || [];
+  const payment = schedule.find(p=>p.id===paymentId);
+  if (!payment) return;
+  const today = new Date().toLocaleDateString('el-GR');
+  await dbCall('update_payment', { id:paymentId, paid:true, paidDate:today });
+  payment.paid = true; payment.paid_date = today;
+  const receiptId = 'r'+Date.now();
+  const receipt = {id:receiptId, projectId:currentProject, date:today, amount:Number(payment.amount), note:payment.description};
+  if (!projects[currentProject].receipts) projects[currentProject].receipts=[];
+  projects[currentProject].receipts.push(receipt);
+  await dbCall('save_receipt', receipt);
+  showToast('💳 Δόση εισπράχθηκε!');
+  showExistingSchedule(schedule);
+  addAI(`💳 Δόση **"${payment.description}"** εισπράχθηκε!\n\nΠοσό: €${Number(payment.amount).toLocaleString('el-GR')}\nΗμερομηνία: ${today}`);
+}
+
+async function saveReceipt() {
+  const amount = Number(document.getElementById('rAmount').value);
+  if (!amount) { alert('Βάλε ποσό!'); return; }
+  const note = document.getElementById('rNote').value.trim();
+  const id = 'r'+Date.now();
+  const receipt = { id, projectId:currentProject, date:new Date().toLocaleDateString('el-GR'), amount, note };
+  if (!projects[currentProject].receipts) projects[currentProject].receipts=[];
+  projects[currentProject].receipts.push(receipt);
+  await dbCall('save_receipt', receipt);
+  showToast('💳 Είσπραξη αποθηκεύτηκε!');
+  closeReceiptModal();
+  document.getElementById('rAmount').value=''; document.getElementById('rNote').value='';
+  const p = projects[currentProject];
+  const totRec = (p.receipts||[]).reduce((a,r)=>a+Number(r.amount),0);
+  addAI(`💳 Είσπραξη **€${amount.toLocaleString('el-GR')}** καταχωρήθηκε!${note?' ('+note+')':''}\n\nΣύνολο εισπράξεων: €${totRec.toLocaleString('el-GR')}`);
+}
+
+async function createProj() {
+  const name = document.getElementById('fName').value.trim();
+  if (!name) { alert('Δώσε τίτλο!'); return; }
+  const id = 'p'+Date.now();
+  const startDate = document.getElementById('fStartDate').value;
+  const p = { id, name, client:document.getElementById('fClient').value.trim()||'Άγνωστος', budget:document.getElementById('fBudget').value||0, phase:document.getElementById('fPhase').value, start_date:startDate, expenses:[], tasks:[], receipts:[] };
+  projects[id] = p;
+  await dbCall('save_project', p);
+  showToast('✅ Project αποθηκεύτηκε!');
+  currentProject = id; refreshSelect(); closeModal();
+  ['fName','fClient','fBudget','fStartDate'].forEach(i=>document.getElementById(i).value='');
+  history = [];
+  addAI(`🎵 Project **"${p.name}"** δημιουργήθηκε!\n\nΚαλλιτέχνης: ${p.client} | Φάση: ${p.phase}${p.budget?'\nΣυμφωνηθέν ποσό: €'+Number(p.budget).toLocaleString('el-GR'):''}\n\nΤι κάνουμε πρώτα;`);
+}
+
+function switchProj() {
+  currentProject = document.getElementById('projSel').value || null;
+  if (currentProject && projects[currentProject]) {
+    const p = projects[currentProject];
+    const totExp = p.expenses.reduce((a,e)=>a+Number(e.amount),0);
+    const totRec = (p.receipts||[]).reduce((a,r)=>a+Number(r.amount),0);
+    const bud = Number(p.budget)||0;
+    history = [];
+    addAI(`🎵 Project: **"${p.name}"**\nΚαλλιτέχνης: ${p.client} | Φάση: ${p.phase}\n💰 Έξοδα: €${totExp.toLocaleString('el-GR')} | 💳 Εισπράξεις: €${totRec.toLocaleString('el-GR')}${bud?'\n📊 Υπόλοιπο: €'+(bud-totRec).toLocaleString('el-GR'):''}\n\nΠώς μπορώ να βοηθήσω;`);
+    loadPaymentSchedule(currentProject);
+  }
+}
+
+function openManage() { document.getElementById('manageModal').style.display='flex'; renderTab('projects'); }
+function closeManage() { document.getElementById('manageModal').style.display='none'; }
+
+function switchTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderTab(tab);
+}
+
+function renderTab(tab) {
+  const c = document.getElementById('manageContent');
+  if (tab === 'projects') {
+    const items = Object.values(projects);
+    if (!items.length) { c.innerHTML='<div class="empty-msg">Δεν υπάρχουν projects</div>'; return; }
+    c.innerHTML = items.map(p => {
+      const totRec = (p.receipts||[]).reduce((a,r)=>a+Number(r.amount),0);
+      const bud = Number(p.budget)||0;
+      return `<div class="manage-item">
+        <div><div class="manage-item-name">🎵 ${p.name}</div>
+        <div class="manage-item-sub">${p.client} · €${bud.toLocaleString('el-GR')} · ${p.phase}</div></div>
+        <button class="btn-del" onclick="deleteItem('project','${p.id}')">🗑️</button>
+      </div>`;
+    }).join('');
+  } else if (tab === 'expenses') {
+    const all = Object.values(projects).flatMap(p=>(p.expenses||[]).map(e=>({...e,projName:p.name})));
+    if (!all.length) { c.innerHTML='<div class="empty-msg">Δεν υπάρχουν έξοδα</div>'; return; }
+    c.innerHTML = all.map(e => `<div class="manage-item">
+      <div><div class="manage-item-name">💰 €${Number(e.amount).toLocaleString('el-GR')} — ${e.recipient||e.category}</div>
+      <div class="manage-item-sub">${e.projName} · ${e.date} · ${e.category}</div></div>
+      <button class="btn-del" onclick="deleteItem('expense','${e.id}')">🗑️</button>
+    </div>`).join('');
+  } else if (tab === 'receipts') {
+    const all = Object.values(projects).flatMap(p=>(p.receipts||[]).map(r=>({...r,projName:p.name})));
+    if (!all.length) { c.innerHTML='<div class="empty-msg">Δεν υπάρχουν εισπράξεις</div>'; return; }
+    c.innerHTML = all.map(r => `<div class="manage-item">
+      <div><div class="manage-item-name">💳 €${Number(r.amount).toLocaleString('el-GR')}${r.note?' — '+r.note:''}</div>
+      <div class="manage-item-sub">${r.projName} · ${r.date}</div></div>
+      <button class="btn-del" onclick="deleteItem('receipt','${r.id}')">🗑️</button>
+    </div>`).join('');
+  } else {
+    const all = Object.values(projects).flatMap(p=>(p.tasks||[]).map(t=>({...t,projName:p.name})));
+    if (!all.length) { c.innerHTML='<div class="empty-msg">Δεν υπάρχουν εργασίες</div>'; return; }
+    c.innerHTML = all.map(t => `<div class="manage-item">
+      <div><div class="manage-item-name">${t.done?'✅':'⏳'} ${t.name}</div>
+      <div class="manage-item-sub">${t.projName} · ${t.assignee||'-'} · ${t.deadline||'-'}</div></div>
+      <button class="btn-del" onclick="deleteItem('task','${t.id}')">🗑️</button>
+    </div>`).join('');
+  }
+}
+
+async function deleteItem(table, id) {
+  if (!confirm('Διαγραφή;')) return;
+  await dbCall('delete', {table, id});
+  if (table==='project') { delete projects[id]; if(currentProject===id) currentProject=null; refreshSelect(); }
+  else if (table==='expense') Object.values(projects).forEach(p=>{ p.expenses=(p.expenses||[]).filter(e=>e.id!==id); });
+  else if (table==='receipt') Object.values(projects).forEach(p=>{ p.receipts=(p.receipts||[]).filter(r=>r.id!==id); });
+  else Object.values(projects).forEach(p=>{ p.tasks=(p.tasks||[]).filter(t=>t.id!==id); });
+  showToast('🗑️ Διαγράφηκε!');
+  renderTab(currentTab);
+}
+
+function processSaveCommands(text) {
+  const expMatch = text.match(/SAVE_EXPENSE:(\{[^}]+\})/);
+  if (expMatch && currentProject) {
+    try {
+      const d = JSON.parse(expMatch[1]);
+      const id = 'e'+Date.now();
+      const exp = {id, projectId:currentProject, date:new Date().toLocaleDateString('el-GR'), category:d.category||'Γενικά', recipient:d.recipient||'', amount:Number(d.amount)||0, note:d.note||''};
+      if (!projects[currentProject].expenses) projects[currentProject].expenses=[];
+      projects[currentProject].expenses.push(exp);
+      dbCall('save_expense', exp).then(()=>showToast('✅ Έξοδο αποθηκεύτηκε!'));
+    } catch(e){}
+  }
+  const recMatch = text.match(/SAVE_RECEIPT:(\{[^}]+\})/);
+  if (recMatch && currentProject) {
+    try {
+      const d = JSON.parse(recMatch[1]);
+      const id = 'r'+Date.now();
+      const rec = {id, projectId:currentProject, date:new Date().toLocaleDateString('el-GR'), amount:Number(d.amount)||0, note:d.note||''};
+      if (!projects[currentProject].receipts) projects[currentProject].receipts=[];
+      projects[currentProject].receipts.push(rec);
+      dbCall('save_receipt', rec).then(()=>showToast('💳 Είσπραξη αποθηκεύτηκε!'));
+    } catch(e){}
+  }
+  const taskMatch = text.match(/SAVE_TASK:(\{[^}]+\})/);
+  if (taskMatch && currentProject) {
+    try {
+      const d = JSON.parse(taskMatch[1]);
+      const id = 't'+Date.now();
+      const task = {id, projectId:currentProject, name:d.name||'', assignee:d.assignee||'', deadline:d.deadline||'', done:false};
+      if (!projects[currentProject].tasks) projects[currentProject].tasks=[];
+      projects[currentProject].tasks.push(task);
+      dbCall('save_task', task).then(()=>showToast('✅ Εργασία αποθηκεύτηκε!'));
+    } catch(e){}
+  }
+  const projMatch = text.match(/SAVE_PROJECT:(\{[^}]+\})/);
+  if (projMatch) {
+    try {
+      const d = JSON.parse(projMatch[1]);
+      const id = 'p'+Date.now();
+      const proj = {id, name:d.name||'', client:d.client||'', budget:Number(d.budget)||0, phase:'Pre-Production', start_date:d.start_date||'', expenses:[], tasks:[], receipts:[]};
+      projects[id] = proj;
+      dbCall('save_project', proj).then(()=>showToast('✅ Project αποθηκεύτηκε!'));
+      refreshSelect();
+      currentProject = id;
+      document.getElementById('projSel').value = id;
+    } catch(e){}
+  }
+  return text.replace(/SAVE_EXPENSE:\{[^}]+\}/g,'').replace(/SAVE_RECEIPT:\{[^}]+\}/g,'').replace(/SAVE_TASK:\{[^}]+\}/g,'').replace(/SAVE_PROJECT:\{[^}]+\}/g,'').trim();
+}
+
+function addUser(text) {
+  const d=document.createElement('div'); d.className='msg user';
+  d.innerHTML=`<div class="ava user">🎧</div><div class="bubble user">${esc(text)}</div>`;
+  document.getElementById('chat').appendChild(d); scroll();
+}
+function addAI(text) {
+  const clean = processSaveCommands(text);
+  const d=document.createElement('div'); d.className='msg';
+  d.innerHTML=`<div class="ava ai">P</div><div class="bubble ai">${fmt(clean)}</div>`;
+  document.getElementById('chat').appendChild(d); scroll();
+}
+function showTyping() {
+  const d=document.createElement('div'); d.className='msg'; d.id='typ';
+  d.innerHTML=`<div class="ava ai">P</div><div class="bubble ai"><div class="dots"><span></span><span></span><span></span></div></div>`;
+  document.getElementById('chat').appendChild(d); scroll();
+}
+function hideTyping() { const t=document.getElementById('typ'); if(t)t.remove(); }
+function scroll() { document.getElementById('chat').scrollTop=99999; }
+function esc(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+
+function fmt(text) {
+  const lines=text.split('\n'); let out=[],inT=false,rows=[];
+  const flush=()=>{ if(rows.length){let h='<table>'; rows.forEach((r,i)=>{ h+='<tr>'+r.map(c=>i===0?`<th>${c}</th>`:`<td>${c}</td>`).join('')+'</tr>'; }); h+='</table>'; out.push(h); rows=[]; } inT=false; };
+  lines.forEach(line=>{
+    if(/^\|/.test(line.trim())){
+      if(/^[\|\s\-:]+$/.test(line.trim())) return;
+      inT=true; rows.push(line.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim()));
+    } else {
+      if(inT) flush();
+      if(/^[-•*]\s/.test(line.trim())) out.push(`<li>${inl(line.trim().slice(2))}</li>`);
+      else if(line.trim()==='') out.push('<br>');
+      else out.push(`<span>${inl(line)}</span><br>`);
+    }
+  });
+  if(inT) flush();
+  let f=out.join(''); f=f.replace(/((?:<li>.*?<\/li>)+)/g,'<ul>$1</ul>'); return f;
+}
+function inl(t) {
+  return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<code style="background:rgba(155,89,182,0.12);color:#9b59b6;padding:2px 6px;border-radius:4px;font-size:13px">$1</code>');
+}
+
+async function send(txt) {
+  const inp=document.getElementById('inp');
+  const text=(txt||inp.value).trim();
+  if(!text||loading) return;
+  inp.value=''; resize(inp);
+  addUser(text);
+  history.push({role:'user',content:text});
+  loading=true; document.getElementById('sendBtn').disabled=true;
+  showTyping();
+  try {
+    const data = await chatCall(buildSystem(), history);
+    const reply = data?.content?.[0]?.text;
+    if(!reply) throw new Error();
+    history.push({role:'assistant',content:reply});
+    hideTyping(); addAI(reply);
+  } catch(e) { hideTyping(); addAI('❌ Σφάλμα σύνδεσης. Δοκίμασε ξανά.'); }
+  loading=false; document.getElementById('sendBtn').disabled=false;
+}
+
+function qa(type) {
+  const map={'εξοδο':'Κατέγραψε έξοδο: ','εργασια':'Πρόσθεσε εργασία: ','report':'Δώσε μου πλήρες report με έξοδα, εισπράξεις και κατάσταση project.','email':'Email για τον καλλιτέχνη: ','deadline':'Ποια είναι τα επόμενα deadlines;','κοστος':'Υπολόγισε κόστος για: '};
+  const inp=document.getElementById('inp'); inp.value=map[type]||''; inp.focus(); resize(inp);
+}
+function ex(text) { if(text) send(text); }
+function onKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} }
+function resize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,130)+'px'; }
+
+document.getElementById('modal').addEventListener('click',e=>{ if(e.target.id==='modal')closeModal(); });
+document.getElementById('manageModal').addEventListener('click',e=>{ if(e.target.id==='manageModal')closeManage(); });
+document.getElementById('receiptModal').addEventListener('click',e=>{ if(e.target.id==='receiptModal')closeReceiptModal(); });
+document.getElementById('scheduleModal').addEventListener('click',e=>{ if(e.target.id==='scheduleModal')closeScheduleModal(); });
+
+async function checkPassword() {
+  const pwd = document.getElementById('passwordInput').value;
+  if (!pwd) return;
+  const res = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:pwd}) });
+  const data = await res.json();
+  if (data.ok) {
+    document.getElementById('loginScreen').style.display='none';
+    sessionStorage.setItem('auth','true');
+  } else {
+    document.getElementById('loginError').style.display='block';
+  }
+}
+
+if (sessionStorage.getItem('auth')==='true') {
+  document.getElementById('loginScreen').style.display='none';
+}
+
+init();
+</script>
+</body>
+</html>
